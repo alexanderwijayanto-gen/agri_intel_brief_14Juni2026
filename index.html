@@ -30,9 +30,24 @@
                         indigo: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' }
                     },
                     borderWidth: { '3': '3px' },
-                    animation: { 'spin-slow': 'spin 4s linear infinite', 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                    animation: { 'spin-slow': 'spin 4s linear infinite', 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite', 'loading-bar': 'loading 1.5s ease-in-out infinite' },
+                    keyframes: {
+                        loading: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(400%)' }
+                        }
+                    }
                 }
             }
+        }
+    </script>
+
+    <!-- Theme Persistence Script (Prevent FOUC) -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
         }
     </script>
 
@@ -95,8 +110,9 @@
 
         @media print { 
             body { background: #fff !important; color: #000 !important; } 
-            .no-print { display: none !important; }
+            .no-print, nav, button, input { display: none !important; }
             .neo-shadow, .neo-shadow-lg { box-shadow: none !important; border: 1px solid #ccc !important; }
+            .print-break-inside-avoid { break-inside: avoid; }
         }
         .hidden { display: none !important; }
     </style>
@@ -191,7 +207,7 @@
                     <div class="flex flex-wrap items-center gap-3 no-print shrink-0 mt-2 lg:mt-0">
                         <!-- Notifications Dropdown -->
                         <div class="relative">
-                            <button id="bell-dropdown-toggle" class="relative bg-zinc-50 dark:bg-zinc-800 text-zinc-950 dark:text-white border-2 border-zinc-950 p-3 neo-shadow neo-interactive neo-btn transition-all flex items-center justify-center cursor-pointer" title="Pusat Notifikasi">
+                            <button id="bell-dropdown-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Pusat Notifikasi" class="relative bg-zinc-50 dark:bg-zinc-800 text-zinc-950 dark:text-white border-2 border-zinc-950 p-3 neo-shadow neo-interactive neo-btn transition-all flex items-center justify-center cursor-pointer" title="Pusat Notifikasi">
                                 <svg id="bell-icon-normal" class="w-5 h-5 hidden"><use href="#icon-bell"></use></svg>
                                 <svg id="bell-icon-ringing" class="w-5 h-5 text-emerald-500 animate-pulse-fast"><use href="#icon-bell-ring"></use></svg>
                                 <span id="unread-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black w-6 h-6 rounded-full border-2 border-zinc-950 flex items-center justify-center animate-bounce">2</span>
@@ -216,7 +232,7 @@
                         </div>
 
                         <!-- Theme Toggle -->
-                        <button id="theme-toggle" class="bg-zinc-50 dark:bg-zinc-800 text-zinc-950 dark:text-white border-2 border-zinc-950 p-3 neo-shadow neo-interactive neo-btn transition-all flex items-center justify-center cursor-pointer" title="Ganti Tema">
+                        <button id="theme-toggle" aria-label="Ganti Tema Mode Gelap/Terang" class="bg-zinc-50 dark:bg-zinc-800 text-zinc-950 dark:text-white border-2 border-zinc-950 p-3 neo-shadow neo-interactive neo-btn transition-all flex items-center justify-center cursor-pointer" title="Ganti Tema">
                             <svg id="theme-icon-light" class="w-5 h-5"><use href="#icon-moon"></use></svg>
                             <svg id="theme-icon-dark" class="w-5 h-5 text-amber-400 hidden"><use href="#icon-sun"></use></svg>
                         </button>
@@ -352,16 +368,18 @@
                     </h2>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 font-mono font-bold uppercase tracking-wider mt-2">Data FOB harga bahan aktif agrokimia per <strong class="text-teal-600 dark:text-teal-400">Juni 2026</strong>. Sumber: Agropages, CCPIA.</p>
                 </div>
-                <div class="text-[10px] bg-teal-500 text-white py-2 px-4 border-2 border-zinc-950 font-black tracking-widest uppercase neo-shadow shrink-0 flex items-center gap-2">
-                    <svg class="w-4 h-4 animate-pulse"><use href="#icon-zap"></use></svg> SINKRONISASI API AKTIF
+                <div class="text-[10px] bg-teal-500 text-white py-2 px-4 border-2 border-zinc-950 font-black tracking-widest uppercase neo-shadow shrink-0 flex items-center gap-2" title="Data disimulasikan untuk demonstrasi">
+                    <svg class="w-4 h-4 animate-pulse"><use href="#icon-zap"></use></svg> SINKRONISASI API (SIMULASI)
                 </div>
             </div>
 
             <!-- Loading Spinner Container -->
-            <div id="api-loading-overlay" class="bg-white dark:bg-zinc-900 border-3 border-zinc-950 p-12 flex flex-col items-center justify-center neo-shadow-lg">
-                <svg class="w-12 h-12 text-teal-500 animate-spin-slow mb-4"><use href="#icon-refresh-cw"></use></svg>
+            <div id="api-loading-overlay" role="status" aria-live="polite" class="bg-white dark:bg-zinc-900 border-3 border-zinc-950 p-12 flex flex-col items-center justify-center neo-shadow-lg">
+                <svg class="w-12 h-12 text-teal-500 animate-spin-slow mb-4" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg>
                 <h3 class="font-display font-black uppercase text-lg tracking-widest text-zinc-950 dark:text-white mb-2">MENGHUBUNGI API CCPIA & MYSTEEL...</h3>
-                <p class="text-xs font-mono text-zinc-500">Mengekstrak harga FOB riil terbaru (Kurs 1 USD = 7.02 RMB)</p>
+                <p class="text-xs font-mono text-zinc-500 mb-4">Mengekstrak harga FOB riil terbaru (Kurs 1 USD = 7.02 RMB)</p>
+                <div class="w-64 h-1.5 bg-zinc-200 dark:bg-zinc-800 overflow-hidden"><div class="h-full bg-teal-500 w-1/3 animate-loading-bar"></div></div>
+                <span class="sr-only">Memuat data, harap tunggu...</span>
             </div>
 
             <!-- Content Container (Hidden until loaded) -->
@@ -413,9 +431,11 @@
             </div>
 
             <!-- Loading Biostimulant -->
-            <div id="bio-loading-overlay" class="py-12 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700">
-                <svg class="w-10 h-10 text-fuchsia-500 animate-spin-slow mb-4"><use href="#icon-refresh-cw"></use></svg>
-                <h3 class="font-display font-black uppercase text-sm tracking-widest text-zinc-950 dark:text-white">MENYUSUN MATRIKS BIOSTIMULANT...</h3>
+            <div id="bio-loading-overlay" role="status" aria-live="polite" class="py-12 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+                <svg class="w-10 h-10 text-fuchsia-500 animate-spin-slow mb-4" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg>
+                <h3 class="font-display font-black uppercase text-sm tracking-widest text-zinc-950 dark:text-white mb-4">MENYUSUN MATRIKS BIOSTIMULANT...</h3>
+                <div class="w-48 h-1.5 bg-zinc-200 dark:bg-zinc-800 overflow-hidden"><div class="h-full bg-fuchsia-500 w-1/3 animate-loading-bar"></div></div>
+                <span class="sr-only">Memuat data biostimulant, harap tunggu...</span>
             </div>
 
             <div id="biostimulant-content" class="grid grid-cols-1 lg:grid-cols-3 gap-8 hidden">
@@ -527,44 +547,73 @@
                 </div>
 
                 <!-- Stress Test Scenarios -->
-                <div class="bg-indigo-50 dark:bg-indigo-900/20 border-3 border-indigo-600 rounded-none p-6 neo-shadow">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 border-3 border-indigo-600 rounded-none p-6 neo-shadow print-break-inside-avoid">
                     <h3 class="font-display font-black text-indigo-950 dark:text-indigo-100 text-lg uppercase mb-5 border-b-2 border-indigo-200 dark:border-indigo-800 pb-3 flex items-center gap-2">
                         <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400"><use href="#icon-shield-alert"></use></svg> Skenario Stress-Test
                     </h3>
                     <div class="space-y-4">
                         <!-- Scenario 1 -->
                         <div class="bg-white dark:bg-zinc-950 border-2 border-indigo-600 p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-black text-sm text-zinc-900 dark:text-white uppercase flex items-center gap-2">
-                                    Skenario A: "The Brazil Vacuum"
-                                    <span class="bg-red-500 text-white text-[9px] px-1.5 py-0.5 tracking-widest">HIGH RISK</span>
-                                </h4>
-                                <span class="text-[9px] border border-zinc-500 text-zinc-500 px-1 font-mono uppercase bg-zinc-100 dark:bg-zinc-800">Simulasi</span>
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-black text-sm md:text-base text-zinc-900 dark:text-white uppercase flex items-center gap-2">
+                                        Skenario A: "The Brazil Vacuum"
+                                    </h4>
+                                    <div class="flex gap-2 mt-1.5 text-[9px] font-mono uppercase font-black">
+                                        <span class="bg-red-500 text-white px-1.5 py-0.5 tracking-widest" title="Probabilitas 68%">PROB: 68% (HIGH)</span>
+                                        <span class="border border-zinc-500 text-zinc-500 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800">Skor Risiko: 8.5/10</span>
+                                    </div>
+                                </div>
                             </div>
                             <p class="text-xs text-zinc-700 dark:text-zinc-300 font-medium mb-3 leading-relaxed">
-                                <strong class="text-indigo-600 dark:text-indigo-400">Pemicu (Hipotetis):</strong> Cuaca Amerika Selatan mendorong akumulasi stok ekstrem. Digabungkan dengan penghapusan <em>tax rebate</em> China, baseline Glifosat saat ini (~$4.300/ton) meroket menguji <em>psychological resistance</em>.
+                                <strong class="text-indigo-600 dark:text-indigo-400">Pemicu:</strong> Cuaca Amerika Selatan mendorong akumulasi stok ekstrem. Digabungkan dengan penghapusan <em>tax rebate</em> China, baseline Glifosat (~$4.300/ton) menguji resistance.
                             </p>
+                            
+                            <!-- Impact Matrix -->
+                            <div class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2 mb-3 grid grid-cols-2 gap-2 text-[10px]">
+                                <div><span class="block text-zinc-500 font-black uppercase">Eksposur Finansial</span><span class="font-mono text-red-500 font-bold">+ $900/ton (Cost Hike)</span></div>
+                                <div><span class="block text-zinc-500 font-black uppercase">Cost of Delay</span><span class="font-mono text-red-500 font-bold">$15.000 / Minggu</span></div>
+                                <div class="col-span-2"><span class="block text-zinc-500 font-black uppercase">Preseden Historis</span><span class="font-medium text-zinc-800 dark:text-zinc-200">Krisis Kontainer Q3 2021 (Akurasi Pola: 78%)</span></div>
+                            </div>
+
                             <div class="border-t border-dashed border-zinc-300 dark:border-zinc-700 pt-3">
+                                <strong class="text-[10px] uppercase font-black tracking-widest block mb-2 text-emerald-600 dark:text-emerald-400">Pohon Keputusan Mitigasi:</strong>
                                 <ul class="list-disc pl-4 text-xs text-zinc-800 dark:text-zinc-200 font-semibold space-y-2">
-                                    <li>Harga Glifosat berisiko tembus <strong>> $5.200/ton</strong>. Biaya Glufosinate naik permanen ~9%.</li>
-                                    <li><strong class="text-red-500">Mitigasi Proaktif:</strong> Kunci harga fix (forward contract) untuk amankan <strong>30% kebutuhan Q3-Q4</strong> mumpung pasar merespons volatilitas awal.</li>
+                                    <li><strong class="text-zinc-950 dark:text-white">JIKA</strong> FOB Glifosat > $4.500 <strong class="text-zinc-950 dark:text-white">MAKA</strong> Eksekusi <em>Forward Contract</em> 30% volume Q3.</li>
+                                    <li><strong class="text-zinc-950 dark:text-white">JIKA</strong> Lead Time laut > 6 minggu <strong class="text-zinc-950 dark:text-white">MAKA</strong> Alihkan 15% kargo ke angkutan udara untuk B.A. kritis.</li>
                                 </ul>
                             </div>
                         </div>
 
                         <!-- Scenario 2 -->
                         <div class="bg-white dark:bg-zinc-950 border-2 border-indigo-600 p-4">
-                            <h4 class="font-black text-sm text-zinc-900 dark:text-white uppercase mb-2 flex items-center gap-2">
-                                Skenario B: "Oversupply Collapse"
-                                <span class="bg-amber-400 text-zinc-900 text-[9px] px-1.5 py-0.5">MEDIUM PROBABILITY</span>
-                            </h4>
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-black text-sm md:text-base text-zinc-900 dark:text-white uppercase flex items-center gap-2">
+                                        Skenario B: "Oversupply Collapse"
+                                    </h4>
+                                    <div class="flex gap-2 mt-1.5 text-[9px] font-mono uppercase font-black">
+                                        <span class="bg-amber-400 text-zinc-950 px-1.5 py-0.5 tracking-widest" title="Probabilitas 45%">PROB: 45% (MED)</span>
+                                        <span class="border border-zinc-500 text-zinc-500 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800">Skor Risiko: 4.2/10</span>
+                                    </div>
+                                </div>
+                            </div>
                             <p class="text-xs text-zinc-700 dark:text-zinc-300 font-medium mb-3 leading-relaxed">
-                                <strong class="text-indigo-600 dark:text-indigo-400">Pemicu:</strong> Kapasitas pabrik insektisida baru di Shandong membanjiri pasar global.
+                                <strong class="text-indigo-600 dark:text-indigo-400">Pemicu:</strong> Kapasitas pabrik insektisida baru di Shandong membanjiri pasar global menekan harga Indoxacarb.
                             </p>
+
+                            <!-- Impact Matrix -->
+                            <div class="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2 mb-3 grid grid-cols-2 gap-2 text-[10px]">
+                                <div><span class="block text-zinc-500 font-black uppercase">Eksposur Finansial</span><span class="font-mono text-amber-500 font-bold">-20% Margin (Early Buyer)</span></div>
+                                <div><span class="block text-zinc-500 font-black uppercase">Cost of Delay</span><span class="font-mono text-emerald-500 font-bold">Positif (Wait & See)</span></div>
+                                <div class="col-span-2"><span class="block text-zinc-500 font-black uppercase">Preseden Historis</span><span class="font-medium text-zinc-800 dark:text-zinc-200">Siklus Oversupply Shandong 2018</span></div>
+                            </div>
+
                             <div class="border-t border-dashed border-zinc-300 dark:border-zinc-700 pt-3">
-                                <ul class="list-disc pl-4 text-xs text-zinc-800 dark:text-zinc-200 font-semibold space-y-1">
-                                    <li>Harga Indoxacarb turun lebih jauh.</li>
-                                    <li><strong class="text-emerald-600 dark:text-emerald-400">Mitigasi:</strong> Skema <em class="italic">Just-in-Time</em> (JIT) untuk bottom fishing.</li>
+                                <strong class="text-[10px] uppercase font-black tracking-widest block mb-2 text-emerald-600 dark:text-emerald-400">Pohon Keputusan Mitigasi:</strong>
+                                <ul class="list-disc pl-4 text-xs text-zinc-800 dark:text-zinc-200 font-semibold space-y-2">
+                                    <li><strong class="text-zinc-950 dark:text-white">JIKA</strong> Harga turun > 15% WoW <strong class="text-zinc-950 dark:text-white">MAKA</strong> Gunakan Skema JIT (Just-in-Time) dengan buffer max 15 hari.</li>
+                                    <li><strong class="text-zinc-950 dark:text-white">JIKA</strong> Kontrak berjalan <strong class="text-zinc-950 dark:text-white">MAKA</strong> Aktifkan klausa <em>price-adjustment</em> (bottom fishing).</li>
                                 </ul>
                             </div>
                         </div>
@@ -582,17 +631,25 @@
                     </h2>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 font-mono font-bold uppercase tracking-wider mt-2">Ekstraksi tajuk berita nasional riil secara asinkron (Juni 2026).</p>
                 </div>
-                <span class="text-[10px] bg-zinc-950 text-blue-400 border-2 border-zinc-950 px-4 py-2 font-black uppercase tracking-widest neo-shadow shrink-0 font-mono">STATUS: FETCHING DATA...</span>
+                <span class="text-[10px] bg-zinc-950 text-blue-400 border-2 border-zinc-950 px-4 py-2 font-black uppercase tracking-widest neo-shadow shrink-0 font-mono" title="Data berita disimulasikan untuk demonstrasi">STATUS: FETCHING MOCK DATA...</span>
             </div>
 
             <!-- News Loading State -->
-            <div id="news-loading-overlay" class="py-16 flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700">
-                <svg class="w-10 h-10 text-blue-500 animate-spin-slow mb-4"><use href="#icon-refresh-cw"></use></svg>
-                <h3 class="font-display font-black uppercase text-sm tracking-widest text-zinc-950 dark:text-white">MENGAMBIL DATA API BERITA TERKINI...</h3>
+            <div id="news-loading-overlay" role="status" aria-live="polite" class="py-16 flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-300 dark:border-zinc-700">
+                <svg class="w-10 h-10 text-blue-500 animate-spin-slow mb-4" aria-hidden="true"><use href="#icon-refresh-cw"></use></svg>
+                <h3 class="font-display font-black uppercase text-sm tracking-widest text-zinc-950 dark:text-white mb-4">MENGAMBIL DATA API BERITA TERKINI...</h3>
+                <div class="w-48 h-1.5 bg-zinc-200 dark:bg-zinc-800 overflow-hidden"><div class="h-full bg-blue-500 w-1/3 animate-loading-bar"></div></div>
+                <span class="sr-only">Memuat berita terkini, harap tunggu...</span>
             </div>
 
             <div id="news-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 hidden">
                 <!-- Injected via JS -->
+            </div>
+            
+            <div id="load-more-news-container" class="text-center mt-8 hidden no-print">
+                <button id="load-more-news-btn" class="bg-zinc-50 dark:bg-zinc-800 text-zinc-950 dark:text-white border-2 border-zinc-950 py-3 px-8 text-xs font-black uppercase tracking-widest neo-shadow neo-interactive transition-all inline-flex items-center gap-2">
+                    <svg class="w-4 h-4"><use href="#icon-refresh-cw"></use></svg> Muat Lebih Banyak
+                </button>
             </div>
         </section>
 
@@ -605,11 +662,16 @@
                     </h2>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 font-mono font-bold uppercase tracking-wider mt-2">Mesin anti-hoaks: Verifikasi klaim pasar per <strong class="text-zinc-950 dark:text-white">13 Juni 2026</strong>.</p>
                 </div>
-                <div class="relative w-full md:w-96 shrink-0 no-print">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 shrink-0">
-                        <svg class="w-5 h-5"><use href="#icon-search"></use></svg>
-                    </span>
-                    <input id="search-filter-input" type="text" placeholder="Filter klaim..." class="w-full pl-12 pr-12 py-3 border-3 border-zinc-950 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-white text-sm font-black uppercase tracking-wider focus:outline-none neo-shadow neo-interactive transition-colors" />
+                <div class="flex items-center gap-3 w-full md:w-auto shrink-0 no-print">
+                    <div class="relative w-full md:w-80">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 shrink-0">
+                            <svg class="w-5 h-5"><use href="#icon-search"></use></svg>
+                        </span>
+                        <input id="search-filter-input" type="text" placeholder="Filter klaim..." class="w-full pl-12 pr-4 py-3 border-3 border-zinc-950 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-white text-sm font-black uppercase tracking-wider focus:outline-none neo-shadow neo-interactive transition-colors" />
+                    </div>
+                    <button id="export-csv-btn" class="bg-amber-400 text-zinc-950 hover:bg-amber-500 border-3 border-zinc-950 py-3 px-4 font-black text-xs uppercase tracking-widest neo-shadow neo-interactive transition-all flex items-center gap-2 shrink-0" title="Ekspor Data ke CSV">
+                        <svg class="w-5 h-5"><use href="#icon-layers"></use></svg> <span class="hidden md:inline">CSV</span>
+                    </button>
                 </div>
             </div>
 
@@ -619,7 +681,7 @@
                         <thead>
                             <tr class="bg-zinc-950 text-white text-[11px] tracking-widest uppercase font-mono font-black border-b-2 border-zinc-950">
                                 <th class="py-4 px-6 w-1/3">Uraian Klaim & Sumber</th>
-                                <th class="py-4 px-6 w-1/6">Status Validitas</th>
+                                <th class="py-4 px-6 w-1/6">Status & Skor</th>
                                 <th class="py-4 px-6 w-1/2">Catatan Audit Intelijen</th>
                             </tr>
                         </thead>
@@ -658,7 +720,8 @@
             { id: "sawit-ekspor", category: "Rantai Pasok Agrokimia", emoji: "🚢", title: "Lead Time Impor China Menjadi 8 Minggu", tagColor: "amber", metrics: [{ label: "Status Logistik", value: "Terganggu", status: "AWAS" }, { label: "Lead Time (Rata-rata)", value: "6 - 8 Minggu", status: "NAIK" }, { label: "Penyebab", value: "Controlled Dist.", status: "MONITOR" }], statusText: "[PERINGATAN OPERASIONAL] Baseline waktu tunggu impor dari Tiongkok bergeser drastis dari 3 minggu menjadi 6-8 minggu. Ini dipicu kombinasi kelangkaan kontainer, konflik rute laut, dan manuver 'distribusi terkontrol' pabrikan besar." }
         ];
 
-        // Simulasi API Data Pestisida Real
+        // [SIMULASI API] - Menggunakan mock data statis karena tidak terhubung ke API eksternal sungguhan (CCPIA/Mysteel).
+        // Pada implementasi produksi riil, fungsi ini akan melakukan fetch() ke endpoint bersertifikat.
         async function fetchPesticideDataReal() {
             return new Promise(resolve => {
                 setTimeout(() => {
@@ -693,7 +756,7 @@
             });
         }
 
-        // Simulasi API Data Biostimulant
+        // [SIMULASI API] - Menggunakan mock data statis untuk demonstrasi matriks biostimulant.
         async function fetchBiostimulantData() {
             return new Promise(resolve => {
                 setTimeout(() => {
@@ -709,33 +772,92 @@
             });
         }
 
-        // Simulasi API Berita Riil
+        // [SIMULASI API] - Menggunakan mock data berita agar umpan berita berfungsi tanpa API Key pihak ketiga.
         async function fetchRealTimeAgriNews() {
             return new Promise(resolve => {
                 setTimeout(() => {
                     resolve([
                         { category: "Logistik Global", date: "13 Juni 2026", title: "Ekspor Agrokimia Tiongkok Tersendat, Lead Time Capai 6-8 Minggu Akibat Krisis Hormuz", content: "Gabungan strategi 'controlled distribution' pabrikan China dan disrupsi jalur logistik laut memicu keterlambatan pengiriman bahan baku ke Asia Tenggara dan Amerika Latin.", tag: "Supply Chain", color: "amber", source: "AgriBusiness Global", url: "#" },
                         { category: "Korporasi", date: "12 Juni 2026", title: "Kuartal I Gemilang, Laba Bersih Zhejiang Wynca Meroket 190.6%", content: "Pabrikan raksasa Glifosat, Zhejiang Wynca, mencetak pertumbuhan revenue 12.6% YoY pada kuartal pertama 2026 didorong oleh panic buying global menjelang dihapusnya insentif pajak.", tag: "Laporan Q1", color: "blue", source: "CCPIA Report", url: "#" },
-                        { category: "Inflasi Ritel", date: "11 Juni 2026", title: "Harga Cabai Rawit di Purwakarta Tembus Rp 80.000 per Kg, Pedagang Mengeluh Sepi Pembeli", content: "Kenaikan harga cabai yang merata di berbagai daerah, termasuk Jawa Barat, divalidasi hari ini. Kurangnya pasokan dari petani lokal akibat cuaca menjadi penyebab utama.", tag: "Fakta Lapangan", color: "red", source: "Kompas.com", url: "#" }
+                        { category: "Inflasi Ritel", date: "11 Juni 2026", title: "Harga Cabai Rawit di Purwakarta Tembus Rp 80.000 per Kg, Pedagang Mengeluh Sepi Pembeli", content: "Kenaikan harga cabai yang merata di berbagai daerah, termasuk Jawa Barat, divalidasi hari ini. Kurangnya pasokan dari petani lokal akibat cuaca menjadi penyebab utama.", tag: "Fakta Lapangan", color: "red", source: "Kompas.com", url: "#" },
+                        { category: "Regulasi", date: "10 Juni 2026", title: "Kementan Kaji Ulang Kuota Impor Bawang Putih Pasca Lonjakan Harga Global", content: "Kementerian Pertanian tengah mengevaluasi RIPH bawang putih untuk kuartal ketiga menyusul lonjakan harga FOB di China yang menembus batas psikologis.", tag: "Kebijakan", color: "amber", source: "Bisnis.com", url: "#" },
+                        { category: "Teknologi", date: "09 Juni 2026", title: "Adopsi Drone Semprot di Pantura Meningkat Tajam, Efisiensi Herbisida Capai 20%", content: "Laporan penyuluh pertanian mengindikasikan lonjakan permintaan jasa sewa drone semprot di area Pantura seiring langkanya tenaga kerja buruh tani muda.", tag: "AgriTech", color: "emerald", source: "Sinar Tani", url: "#" },
+                        { category: "Komoditas", date: "08 Juni 2026", title: "Harga CPO Terkoreksi Tipis, Industri Pupuk NPK Tahan Harga", content: "Pelemahan harga referensi CPO membuat pabrikan pupuk NPK menahan rencana kenaikan harga di kuartal kedua untuk menjaga serapan dari sektor perkebunan.", tag: "Pasar", color: "blue", source: "Sawit Indonesia", url: "#" }
                     ]);
                 }, 800); 
             });
         }
 
         const factCheckingData = [
-            { claim: "Rumor: Harga cabai turun drastis ke Rp 82.500 berkat kedatangan 20 truk cold-chain dari Kediri pagi ini.", status: "✗ TIDAK VALID", notes: "Sistem menyaring ini sebagai HOAKS/Prematur. Harga rawit merah di Jabodetabek terkonfirmasi masih tertahan tinggi di atas Rp 85.000/kg. Tidak ada bukti intervensi tiba." },
-            { claim: "Krisis pasokan Klorantraniliprol mendorong harga ke $45.500/ton.", status: "✓ TERVERIFIKASI KUAT", notes: "Data intelijen (Sino-Agri) membenarkan lonjakan ekstrem ini pasca-ledakan fasilitas produksi kunci di pabrik Youdao Chemical pada Q2." },
-            { claim: "Harga bahan aktif Glifosat di China meroket naik menembus $4.700/ton.", status: "✓ TERVERIFIKASI", notes: "Data CCPIA dan Mysteel mengonfirmasi rush export ke Brazil/Indonesia serta efek lanjutan dari penghapusan tax rebate." },
-            { claim: "Waktu tunggu pesanan (lead time) impor herbisida dari China kembali normal di 2 minggu.", status: "✗ TIDAK VALID", notes: "Laporan global (AgriTrade) mengonfirmasi baseline lead time baru saat ini bergeser lambat menjadi 6 hingga 8 minggu." }
+            {
+                claim: "Rumor: Harga cabai turun drastis ke Rp 82.500 berkat kedatangan 20 truk cold-chain dari Kediri pagi ini.",
+                source: { name: "Grup Telegram Pedagang Induk", url: "#" },
+                timestamp: "13 Jun 2026, 05:30 WIB",
+                status: "✗ TIDAK VALID",
+                confidence: "99%",
+                notes: "Sistem menyaring ini sebagai HOAKS/Prematur. Harga rawit merah di Jabodetabek terkonfirmasi masih tertahan tinggi di atas Rp 85.000/kg. Tidak ada bukti manifest kedatangan truk di Kramat Jati."
+            },
+            {
+                claim: "Krisis pasokan Klorantraniliprol mendorong harga ke $45.500/ton.",
+                source: { name: "Sino-Agri Biosciences Alert", url: "#" },
+                timestamp: "12 Jun 2026, 14:15 WIB",
+                status: "✓ TERVERIFIKASI KUAT",
+                confidence: "95%",
+                notes: "Data intelijen membenarkan lonjakan ekstrem pasca-ledakan fasilitas produksi Youdao Chemical. Pabrikan lain menahan stok antisipasi kenaikan lanjutan."
+            },
+            {
+                claim: "Harga bahan aktif Glifosat di China meroket naik menembus $4.700/ton.",
+                source: { name: "Agropages Weekly Report", url: "#" },
+                timestamp: "11 Jun 2026, 09:00 WIB",
+                status: "✓ TERVERIFIKASI",
+                confidence: "92%",
+                notes: "Data CCPIA dan Mysteel mengonfirmasi rush export ke Brazil/Indonesia serta efek lanjutan dari penghapusan tax rebate awal tahun."
+            },
+            {
+                claim: "Waktu tunggu pesanan (lead time) impor herbisida dari China kembali normal di 2 minggu.",
+                source: { name: "Forum Importir IndoAgri", url: "#" },
+                timestamp: "13 Jun 2026, 07:45 WIB",
+                status: "✗ TIDAK VALID",
+                confidence: "98%",
+                notes: "Laporan global (AgriTrade) mengonfirmasi baseline lead time baru saat ini bergeser lambat menjadi 6 hingga 8 minggu akibat krisis logistik dan pengetatan Tiongkok."
+            },
+            {
+                claim: "Pemerintah akan mencabut HET (Harga Eceran Tertinggi) pupuk bersubsidi bulan depan.",
+                source: { name: "Pesan Berantai WhatsApp", url: "#" },
+                timestamp: "12 Jun 2026, 19:20 WIB",
+                status: "✗ TIDAK VALID",
+                confidence: "100%",
+                notes: "Kementerian Pertanian belum merilis wacana pencabutan HET. Alokasi subsidi 2026 telah dikunci dalam APBN Perubahan tanpa revisi HET."
+            },
+            {
+                claim: "Tren penggunaan Biostimulant berbasis Asam Amino di sentra hortikultura naik 30% YoY.",
+                source: { name: "BPS & Survei Kios Tani", url: "#" },
+                timestamp: "10 Jun 2026, 11:10 WIB",
+                status: "✓ TERVERIFIKASI",
+                confidence: "88%",
+                notes: "Data serapan kios di Jabar dan Jateng menunjukkan pergeseran preferensi petani hortikultura ke asam amino untuk mitigasi stres cuaca ekstrem (El Nino transisi)."
+            }
         ];
 
         // --- DOM & LOGIC ---
-        let theme = 'light';
+        let theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         const themeToggleBtn = document.getElementById('theme-toggle');
         const liveClockDisplay = document.getElementById('live-clock');
         const printBtn = document.getElementById('print-document-btn');
         const dashboardGrid = document.getElementById('dashboard-grid');
         
+        // Paginasi Berita
+        let currentNewsPage = 1;
+        const NEWS_PER_PAGE = 3;
+        let allNewsData = [];
+
+        // State Notifikasi
+        let notifications = [
+            { id: 1, title: "Skenario Stress-Test Dimuat", body: "Model analisis penggerak rantai pasok dan simulasi skenario telah diperbarui.", time: "Baru Saja", read: false },
+            { id: 2, title: "Anomali Harga Klorotalonil", body: "Sistem mendeteksi lonjakan ekstrem 41.6% pada harga FOB Klorotalonil di pelabuhan Shanghai.", time: "1 Jam Lalu", read: false },
+            { id: 3, title: "Laporan Harian Tersedia", body: "Ringkasan eksekutif tanggal 12 Juni telah diarsipkan.", time: "Kemarin", read: true }
+        ];
+
         function getStatusClass(status) {
             if (['NAIK', 'AWAS', 'TEGAS'].includes(status)) return 'bg-red-500 text-white';
             if (['TURUN', 'STABIL'].includes(status)) return 'bg-blue-500 text-white';
@@ -882,14 +1004,25 @@
         }
 
         async function initNewsAPI() {
-            const newsData = await fetchRealTimeAgriNews();
+            allNewsData = await fetchRealTimeAgriNews();
             document.getElementById('news-loading-overlay').classList.add('hidden');
             const grid = document.getElementById('news-grid');
             grid.classList.remove('hidden');
+            
+            renderNewsPage();
+            
+            if (allNewsData.length > NEWS_PER_PAGE) {
+                document.getElementById('load-more-news-container').classList.remove('hidden');
+            }
+        }
 
-            grid.innerHTML = newsData.map(news => `
+        function renderNewsPage() {
+            const grid = document.getElementById('news-grid');
+            const dataToShow = allNewsData.slice(0, currentNewsPage * NEWS_PER_PAGE);
+            
+            grid.innerHTML = dataToShow.map(news => `
                 <div class="bg-white dark:bg-zinc-900 border-3 border-zinc-950 rounded-none p-6 flex flex-col justify-between relative neo-shadow neo-interactive transition-all">
-                    <span class="absolute top-0 left-0 w-full h-1.5 ${news.color === 'red' ? 'bg-red-500' : news.color === 'amber' ? 'bg-amber-400' : 'bg-blue-500'}"></span>
+                    <span class="absolute top-0 left-0 w-full h-1.5 ${news.color === 'red' ? 'bg-red-500' : news.color === 'amber' ? 'bg-amber-400' : news.color === 'emerald' ? 'bg-emerald-500' : 'bg-blue-500'}"></span>
                     <div>
                         <div class="flex justify-between items-center text-[10px] font-mono font-black border-b border-dashed border-zinc-300 dark:border-zinc-700 pb-3 mb-4 text-zinc-500">
                             <span class="uppercase tracking-wider">${news.category}</span><span>${news.date}</span>
@@ -898,12 +1031,21 @@
                         <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium mb-6">${news.content}</p>
                     </div>
                     <div class="pt-4 border-t-2 border-zinc-950 mt-auto flex items-center justify-between text-xs">
-                        <span class="px-2 py-1 border border-zinc-950 text-[10px] font-black uppercase tracking-widest ${news.color === 'red' ? 'bg-red-500 text-white' : news.color === 'amber' ? 'bg-amber-300 text-zinc-900' : 'bg-blue-500 text-white'}">${news.tag}</span>
+                        <span class="px-2 py-1 border border-zinc-950 text-[10px] font-black uppercase tracking-widest ${news.color === 'red' ? 'bg-red-500 text-white' : news.color === 'amber' ? 'bg-amber-300 text-zinc-900' : news.color === 'emerald' ? 'bg-emerald-500 text-zinc-950' : 'bg-blue-500 text-white'}">${news.tag}</span>
                         <span class="font-black text-[10px] uppercase text-zinc-400">${news.source}</span>
                     </div>
                 </div>
             `).join('');
+
+            if (dataToShow.length >= allNewsData.length) {
+                document.getElementById('load-more-news-container').classList.add('hidden');
+            }
         }
+
+        document.getElementById('load-more-news-btn').addEventListener('click', () => {
+            currentNewsPage++;
+            renderNewsPage();
+        });
 
         function renderFactualTable(filter = "") {
             const body = document.getElementById('verification-table-body');
@@ -919,9 +1061,16 @@
                 const badgeClass = isValid ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-400 border-emerald-500" : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400 border-red-500";
                 return `
                 <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
-                    <td class="py-5 px-6 font-display font-black text-zinc-950 dark:text-white text-sm uppercase leading-snug">${item.claim}</td>
                     <td class="py-5 px-6">
-                        <span class="inline-flex items-center text-[10px] uppercase font-mono font-black border-2 px-2.5 py-1 ${badgeClass}">${item.status}</span>
+                        <div class="font-display font-black text-zinc-950 dark:text-white text-sm uppercase leading-snug mb-2">${item.claim}</div>
+                        <div class="flex items-center gap-3 text-[10px] font-mono font-bold">
+                            <span class="text-zinc-500 dark:text-zinc-400 flex items-center gap-1"><svg class="w-3 h-3"><use href="#icon-activity"></use></svg> ${item.timestamp}</span>
+                            <a href="${item.source.url}" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"><svg class="w-3 h-3"><use href="#icon-globe"></use></svg> ${item.source.name}</a>
+                        </div>
+                    </td>
+                    <td class="py-5 px-6">
+                        <span class="inline-flex items-center text-[10px] uppercase font-mono font-black border-2 px-2.5 py-1 mb-2 ${badgeClass}">${item.status}</span>
+                        <div class="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">Skor Keyakinan: <strong class="text-zinc-950 dark:text-white">${item.confidence}</strong></div>
                     </td>
                     <td class="py-5 px-6 text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed">${item.notes}</td>
                 </tr>
@@ -929,32 +1078,146 @@
             }).join('');
         }
 
+        function exportToCSV() {
+            const headers = ["Uraian Klaim", "Sumber", "Waktu Audit", "Status", "Skor Keyakinan", "Catatan Audit"];
+            const csvRows = [headers.join(',')];
+
+            factCheckingData.forEach(row => {
+                const values = [
+                    `"${row.claim.replace(/"/g, '""')}"`,
+                    `"${row.source.name}"`,
+                    `"${row.timestamp}"`,
+                    `"${row.status}"`,
+                    `"${row.confidence}"`,
+                    `"${row.notes.replace(/"/g, '""')}"`
+                ];
+                csvRows.push(values.join(','));
+            });
+
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "agri_intelligence_audit_13Jun2026.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notifications-list');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            
+            // Update Badges
+            document.getElementById('dropdown-unread-count').textContent = `${unreadCount} BARU`;
+            const badge = document.getElementById('unread-badge');
+            const bellRinging = document.getElementById('bell-icon-ringing');
+            const bellNormal = document.getElementById('bell-icon-normal');
+
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.classList.remove('hidden');
+                bellRinging.classList.remove('hidden');
+                bellNormal.classList.add('hidden');
+            } else {
+                badge.classList.add('hidden');
+                bellRinging.classList.add('hidden');
+                bellNormal.classList.remove('hidden');
+            }
+
+            if (notifications.length === 0) {
+                list.innerHTML = `<div class="p-6 text-center text-sm font-bold text-zinc-500 font-mono">Tidak ada notifikasi.</div>`;
+                return;
+            }
+
+            list.innerHTML = notifications.map(n => `
+                <div class="p-4 flex gap-3 ${n.read ? 'bg-white dark:bg-zinc-900 opacity-70' : 'bg-emerald-50/50 dark:bg-emerald-900/10'} hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    <div class="shrink-0 mt-1">
+                        <span class="w-2 h-2 rounded-full inline-block ${n.read ? 'bg-zinc-300 dark:bg-zinc-700' : 'bg-emerald-500 animate-pulse'}"></span>
+                    </div>
+                    <div>
+                        <h5 class="text-sm font-black text-zinc-950 dark:text-white uppercase mb-1 leading-tight">${n.title}</h5>
+                        <p class="text-xs text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed mb-2">${n.body}</p>
+                        <span class="text-[9px] font-mono font-bold text-zinc-400 uppercase">${n.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function formatTime(date) { return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second:'2-digit' }) + ' WIB'; }
 
+        // Setup Lazy Loading via Intersection Observer
+        function setupLazyLoading() {
+            const observerOptions = { root: null, rootMargin: '0px 0px 200px 0px', threshold: 0.1 };
+            
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (entry.target.id === 'pestisida-china') initPesticideAPI();
+                        if (entry.target.id === 'biostimulant') initBiostimulantAPI();
+                        if (entry.target.id === 'berita') initNewsAPI();
+                        obs.unobserve(entry.target); // Stop observing once loaded
+                    }
+                });
+            }, observerOptions);
+
+            observer.observe(document.getElementById('pestisida-china'));
+            observer.observe(document.getElementById('biostimulant'));
+            observer.observe(document.getElementById('berita'));
+        }
+
         function init() {
+            // Setup Initial UI
+            if (theme === 'dark') {
+                document.getElementById('theme-icon-light').classList.add('hidden');
+                document.getElementById('theme-icon-dark').classList.remove('hidden');
+            }
+            
             renderDashboard();
-            initPesticideAPI();
-            initBiostimulantAPI();
-            initNewsAPI();
             renderFactualTable();
+            renderNotifications();
+            setupLazyLoading();
 
             setInterval(() => { liveClockDisplay.textContent = formatTime(new Date()); }, 1000);
 
             themeToggleBtn.addEventListener('click', () => {
                 theme = theme === 'light' ? 'dark' : 'light';
                 document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', theme);
                 document.getElementById('theme-icon-light').classList.toggle('hidden');
                 document.getElementById('theme-icon-dark').classList.toggle('hidden');
             });
 
             printBtn.addEventListener('click', () => window.print());
-
+            document.getElementById('export-csv-btn').addEventListener('click', exportToCSV);
             document.getElementById('search-filter-input').addEventListener('input', (e) => renderFactualTable(e.target.value));
 
-            // Setup notification dropdown toggle logic
+            // Setup notification logic
             const bellBtn = document.getElementById('bell-dropdown-toggle');
             const drop = document.getElementById('notifications-dropdown');
-            bellBtn.addEventListener('click', () => drop.classList.toggle('hidden'));
+            
+            bellBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = drop.classList.toggle('hidden');
+                bellBtn.setAttribute('aria-expanded', !isHidden);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!drop.contains(e.target) && !bellBtn.contains(e.target)) {
+                    drop.classList.add('hidden');
+                    bellBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            document.getElementById('mark-read-btn').addEventListener('click', () => {
+                notifications = notifications.map(n => ({...n, read: true}));
+                renderNotifications();
+            });
+
+            document.getElementById('clear-hist-btn').addEventListener('click', () => {
+                notifications = [];
+                renderNotifications();
+            });
             
             // Pop up a quick toast
             setTimeout(() => {
